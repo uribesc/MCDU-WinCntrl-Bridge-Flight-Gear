@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PropertyList>
+  <meta>
+    <file-type type="string">FlightGear add-on metadata</file-type>
+    <format-version type="int">1</format-version>
+  </meta>
+  <addon>
+    <identifier type="string">org.flightgear.addons.mcdu-bridge</identifier>
+    <name type="string">WinWing MCDU Bridge</name>
+    <version type="string">1.0.0</version>
+    <short-description type="string">Connects a WinWing MCDU to the A320-family through a Python bridge.</short-description>
+    <min-FG-version type="string">2024.1.1</min-FG-version>
+    <license>
+      <designation type="string">GPL-3.0-or-later</designation>
+    </license>
+  </addon>
+</PropertyList>

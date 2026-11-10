@@ -157,4 +157,30 @@ Then select an aircraft from the **A320-family**.
 
 ## License
 
-GPL-3.0. The USB protocol and the screen init packets come from the [XSchenFly](https://github.com/schenlap/XSchenFly) project by memo5.
+This project is free software, released under the **GNU General Public License v3.0**. See the `LICENSE` file for the full text.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+## Credits
+
+### XSchenFly by memo5
+
+The USB protocol of the MCDU (screen data format, color codes, LED and brightness commands, key reports) and the screen init packets in `mcdu_hardware.py` come from [XSchenFly](https://github.com/schenlap/XSchenFly) by memo5, licensed under GPL-3.0.
+
+This code has been **modified**: it was rewritten as a separate driver and adapted to work with FlightGear instead of X-Plane.
+
+### A320-family
+
+The screen element names and positions in `mcdu_layout_data.py` were computed from the MCDU display drawing (`Models/Instruments/MCDU/res/mcdu.svg`) of the [A320-family](https://github.com/legoboyvdlp/A320-family) for FlightGear, by Josh Davidson, Jonathan Redpath, merspieler, Matthew Maring, Thorsten Herrmann, Semir Gebran and contributors. The A320-family is licensed under GPL-2.0.
+
+This file only contains technical data (element names, rows and columns). It does not contain any code or graphics from the A320-family. The add-on calls the public functions of the aircraft at run time, and it does not include any part of the aircraft.
+
+The A320-family is not included in this project. You must install it separately in FlightGear.
+
+### Other references
+
+- [pywinwing](https://devleaks.github.io/pywinwing) by devleaks, used as a reference for the WinWing devices.
+
+## Disclaimer
+
+This is an independent community project. It is not affiliated with or endorsed by WinWing, the FlightGear project, the A320-family developers or Airbus. All trademarks belong to their owners.

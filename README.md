@@ -1,160 +1,160 @@
-# Pont WinWing MCDU per a FlightGear (A320-family)
+# WinWing MCDU Bridge for FlightGear (A320-family)
 
-Aquest projecte connecta un MCDU físic de WinWing / WINCTRL amb el MCDU de l'avió **A320-family** de FlightGear:
+This project connects a physical WinWing / WINCTRL MCDU to the MCDU of the **A320-family** aircraft in FlightGear:
 
-- La **pantalla** del MCDU físic mostra el mateix que el MCDU de l'avió, amb colors i lletra gran i petita.
-- Les **tecles** del MCDU físic fan el mateix que clicar les tecles de l'avió.
-- Alguns **LED** indiquen l'estat de la connexió.
+- The **screen** of the physical MCDU shows the same as the aircraft MCDU, with colors and large and small fonts.
+- The **keys** of the physical MCDU do the same as clicking the keys in the aircraft.
+- Some **LEDs** show the connection status.
 
-Requisits: Windows, Python 3, FlightGear 2024.1.1 o posterior i l'avió A320-family.
+Requirements: Windows, Python 3, FlightGear 2024.1.1 or later, and the A320-family aircraft.
 
-## Com funciona
+## How it works
 
-El sistema té tres peces que parlen entre elles:
+The system has three parts that talk to each other:
 
 ```
- MCDU físic  <── USB ──>  mcdu_bridge.py  <── HTTP ──>  FlightGear + add-on  ──>  MCDU de l'A320
- (pantalla,               (programa Python              (fgfs_addon, en Nasal)
-  tecles, LED)             al teu ordinador)
+ Physical MCDU  <── USB ──>  mcdu_bridge.py  <── HTTP ──>  FlightGear + add-on  ──>  A320 MCDU
+ (screen,                    (Python program               (fgfs_addon, in Nasal)
+  keys, LEDs)                 on your computer)
 ```
 
-### 1. L'add-on de FlightGear (`fgfs_addon`)
+### 1. The FlightGear add-on (`fgfs_addon`)
 
-És un petit programa en Nasal, el llenguatge intern de FlightGear, que es carrega amb l'opció `--addon`. No modifica l'avió. Fa dues feines:
+This is a small program in Nasal, the internal language of FlightGear. It is loaded with the `--addon` option and does not change the aircraft. It has two jobs:
 
-- **Exporta la pantalla.** Cada 0,2 segons llegeix els textos visibles del MCDU de l'avió (text, color i mida de lletra) i també els símbols, com fletxes, caixes i asteriscs. Ho guarda com a text a les propietats `/mcdu-bridge/unit0` (MCDU esquerre) i `/mcdu-bridge/unit1` (MCDU dret).
-- **Rep les tecles.** Quan el programa Python escriu una tecla a `/mcdu-bridge/key-input`, l'add-on crida la funció corresponent de l'avió, la mateixa que s'executa quan cliques la tecla al cockpit. Només accepta les funcions de tecla del MCDU, i només si l'avió té corrent elèctric.
+- **Export the screen.** Every 0.2 seconds it reads the visible texts of the aircraft MCDU (text, color and font size) and the symbols, such as arrows, boxes and stars. It stores them as text in the properties `/mcdu-bridge/unit0` (left MCDU) and `/mcdu-bridge/unit1` (right MCDU).
+- **Receive the keys.** When the Python program writes a key to `/mcdu-bridge/key-input`, the add-on calls the matching aircraft function, the same one that runs when you click the key in the cockpit. It only accepts MCDU key functions, and only when the aircraft has electrical power.
 
-També escriu l'estat a `/mcdu-bridge/status` (`loading`, `no-mcdu` o `ready`).
+It also writes the status to `/mcdu-bridge/status` (`loading`, `no-mcdu` or `ready`).
 
-### 2. El servidor web de FlightGear (`--httpd=8080`)
+### 2. The FlightGear web server (`--httpd=8080`)
 
-FlightGear té un servidor web intern que permet llegir i escriure propietats en format JSON. El programa Python el fa servir per comunicar-se amb l'add-on, a l'adreça `http://localhost:8080/json/mcdu-bridge/...`.
+FlightGear has an internal web server that can read and write properties in JSON format. The Python program uses it to talk to the add-on, at `http://localhost:8080/json/mcdu-bridge/...`.
 
-### 3. El programa Python (`mcdu_bridge.py`)
+### 3. The Python program (`mcdu_bridge.py`)
 
-S'executa al teu ordinador i fa de pont:
+It runs on your computer and works as the bridge:
 
-1. Busca el MCDU per USB (fabricant WinWing, `0x4098`) i el prepara.
-2. Cada 0,1 segons llegeix de FlightGear la pantalla exportada.
-3. Converteix aquestes dades en una graella de **14 files × 24 columnes**, que és la mida de la pantalla física, i l'envia per USB. Només la redibuixa quan canvia alguna cosa.
-4. Llegeix les tecles del MCDU físic i les envia a FlightGear.
+1. It finds the MCDU over USB (vendor WinWing, `0x4098`) and prepares it.
+2. Every 0.1 seconds it reads the exported screen from FlightGear.
+3. It converts this data into a grid of **14 rows × 24 columns**, the size of the physical screen, and sends it over USB. It only redraws the screen when something changes.
+4. It reads the keys of the physical MCDU and sends them to FlightGear.
 
-Si FlightGear o l'add-on no responen, la pantalla mostra un missatge que explica què passa, i el programa torna a provar-ho automàticament. Si desconnectes el cable USB, també es reconnecta sol.
+If FlightGear or the add-on does not answer, the screen shows a message that explains the problem, and the program keeps trying. If you unplug the USB cable, it also reconnects by itself.
 
-## Fitxers
+## Files
 
-| Fitxer | Què fa |
+| File | What it does |
 |---|---|
-| `mcdu_bridge.py` | Programa principal: connecta el MCDU amb FlightGear. |
-| `test_hardware.py` | Prova el MCDU sense FlightGear: pantalla, LED i tecles. |
-| `mcdu_hardware.py` | Controlador USB del MCDU: pantalla, LED, brillantor i lectura de tecles. |
-| `mcdu_keys.py` | Taula de tecles: número de cada tecla i funció de l'avió que crida. |
-| `mcdu_layout.py` | Converteix les dades de FlightGear en la graella de 14 × 24 caràcters. |
-| `mcdu_layout_data.py` | Posició de cada element de la pantalla de l'A320, calculada a partir del dibuix original de l'avió. |
-| `fgfs_addon/addon-main.nas` | Add-on de FlightGear: exporta la pantalla i executa les tecles. |
-| `fgfs_addon/addon-metadata.xml` | Dades de l'add-on que FlightGear necessita per carregar-lo. |
-| `requirements.txt` | Paquet de Python necessari (`hidapi`). |
+| `mcdu_bridge.py` | Main program: connects the MCDU to FlightGear. |
+| `test_hardware.py` | Tests the MCDU without FlightGear: screen, LEDs and keys. |
+| `mcdu_hardware.py` | USB driver for the MCDU: screen, LEDs, brightness and key reading. |
+| `mcdu_keys.py` | Key table: number of each key and the aircraft function it calls. |
+| `mcdu_layout.py` | Converts the FlightGear data into the 14 × 24 character grid. |
+| `mcdu_layout_data.py` | Position of each element of the A320 screen, computed from the original aircraft drawing. |
+| `fgfs_addon/addon-main.nas` | FlightGear add-on: exports the screen and runs the keys. |
+| `fgfs_addon/addon-metadata.xml` | Add-on data that FlightGear needs to load it. |
+| `requirements.txt` | Required Python package (`hidapi`). |
 
-## Instal·lació
+## Installation
 
-1. Descomprimeix el zip, per exemple a `C:\mcdu_bridge`.
-2. Obre un terminal en aquesta carpeta i instal·la la dependència:
+1. Unzip the file, for example to `C:\mcdu_bridge`.
+2. Open a terminal in this folder and install the dependency:
 
    ```
    py -m pip install -r requirements.txt
    ```
 
-## Prova del maquinari (sense FlightGear)
+## Hardware test (without FlightGear)
 
-1. Tanca **SimAppPro**. Si l'has fet servir, desconnecta i torna a connectar el MCDU.
-2. Executa:
+1. Close **SimAppPro**. If you used it, unplug the MCDU and plug it in again.
+2. Run:
 
    ```
    py test_hardware.py
    ```
 
-3. Comprova que:
-   - La pantalla mostra colors, lletra gran i petita i símbols.
-   - Els LED s'encenen d'un en un.
-   - Cada tecla que prems escriu el seu nom al terminal.
+3. Check that:
+   - The screen shows colors, large and small fonts, and symbols.
+   - The LEDs turn on one by one.
+   - Each key you press prints its name in the terminal.
 
-## Configuració de FlightGear
+## FlightGear setup
 
-Al llançador de FlightGear, a **Settings > Additional Settings**, afegeix:
+In the FlightGear launcher, under **Settings > Additional Settings**, add:
 
 ```
 --httpd=8080
 --addon=C:\mcdu_bridge\fgfs_addon
 ```
 
-La ruta de `--addon` ha de ser la carpeta on hi ha `addon-metadata.xml` i `addon-main.nas`. Per trobar-la:
+The `--addon` path must be the folder that contains `addon-metadata.xml` and `addon-main.nas`. To find it:
 
-1. A l'Explorador de fitxers, entra a la carpeta `fgfs_addon`.
-2. Copia la ruta de la barra d'adreces i enganxa-la després de `--addon=`.
+1. In File Explorer, open the `fgfs_addon` folder.
+2. Copy the path from the address bar and paste it after `--addon=`.
 
-Vigila que, en descomprimir, Windows sovint crea una carpeta dins d'una altra, per exemple `C:\mcdu_bridge\mcdu_bridge\fgfs_addon`. Si la ruta té espais, posa-la entre cometes: `--addon="C:\la meva carpeta\fgfs_addon"`.
+Note that when you unzip, Windows often creates a folder inside another folder, for example `C:\mcdu_bridge\mcdu_bridge\fgfs_addon`. If the path has spaces, put it in quotes: `--addon="C:\my folder\fgfs_addon"`.
 
-Després, selecciona un avió de la família **A320-family**.
+Then select an aircraft from the **A320-family**.
 
-## Ús
+## Usage
 
-1. Inicia FlightGear amb l'A320-family.
-2. Amb SimAppPro tancat, executa:
+1. Start FlightGear with the A320-family.
+2. With SimAppPro closed, run:
 
    ```
    py mcdu_bridge.py
    ```
 
-3. Dona corrent elèctric a l'avió. Igual que a l'avió real, el MCDU no funciona sense corrent.
+3. Turn on electrical power in the aircraft. As in the real aircraft, the MCDU does not work without power.
 
-### Opcions
+### Options
 
-| Opció | Què fa |
+| Option | What it does |
 |---|---|
-| `--side left` / `--side right` | Tria quin MCDU de l'avió controles. Per defecte es dedueix del model de MCDU (capità o primer oficial). |
-| `--brightness 180` | Brillantor inicial, de 0 a 255. |
-| `--port 8080` | Port del servidor web de FlightGear, si n'has posat un altre a `--httpd`. |
-| `--host 127.0.0.1` | Ordinador on s'executa FlightGear, si no és el mateix. |
-| `--dump` | Escriu al terminal les dades de pantalla que arriben de FlightGear. Serveix per trobar errors. |
+| `--side left` / `--side right` | Chooses which aircraft MCDU you control. By default it comes from the MCDU model (captain or first officer). |
+| `--brightness 180` | First brightness, from 0 to 255. |
+| `--port 8080` | FlightGear web server port, if you set another one in `--httpd`. |
+| `--host 127.0.0.1` | Computer that runs FlightGear, if it is not the same one. |
+| `--dump` | Prints the screen data from FlightGear in the terminal. Useful to find problems. |
 
-### Tecles especials
+### Special keys
 
-- **BRT** i **DIM** canvien la brillantor del MCDU físic.
-- Si mantens premuda **CLR**, s'esborra tota la línia d'entrada (scratchpad), igual que a l'avió.
-- **SEC F-PLN** i les dues tecles sense nom no fan res, perquè l'A320-family no hi té cap funció.
+- **BRT** and **DIM** change the brightness of the physical MCDU.
+- Holding **CLR** clears the whole entry line (scratchpad), as in the aircraft.
+- **SEC F-PLN** and the two blank keys do nothing, because the A320-family has no function for them.
 
-### LED
+### LEDs
 
-- **FM1** s'encén si controles el MCDU esquerre, i **FM2** si controles el dret.
-- **FAIL** s'encén quan no arriben dades de FlightGear.
-- L'avió no exposa la resta de llums, així que es queden apagats.
+- **FM1** is on when you control the left MCDU, and **FM2** when you control the right one.
+- **FAIL** is on when no data comes from FlightGear.
+- The aircraft does not export the other lights, so they stay off.
 
-## Missatges a la pantalla
+## Screen messages
 
-| Missatge | Què vol dir | Què fer |
+| Message | Meaning | What to do |
 |---|---|---|
-| `WAITING FOR FLIGHTGEAR` | El programa no pot connectar amb FlightGear. | Comprova que FlightGear estigui obert i que tingui `--httpd=8080`. |
-| `ADD-ON NOT LOADED` | FlightGear respon però l'add-on no s'ha carregat. | Revisa la ruta de `--addon`. |
-| `A320-FAMILY MCDU NOT FOUND` | L'avió carregat no és l'A320-family. | Carrega un avió de l'A320-family. |
-| `LOADING AIRCRAFT` | L'avió encara s'està carregant. | Espera uns segons. |
-| Pantalla negra | L'avió està carregat però no té corrent. | Dona corrent a l'avió. |
+| `WAITING FOR FLIGHTGEAR` | The program cannot connect to FlightGear. | Check that FlightGear is running with `--httpd=8080`. |
+| `ADD-ON NOT LOADED` | FlightGear answers, but the add-on is not loaded. | Check the `--addon` path. |
+| `A320-FAMILY MCDU NOT FOUND` | The loaded aircraft is not the A320-family. | Load an A320-family aircraft. |
+| `LOADING AIRCRAFT` | The aircraft is still loading. | Wait a few seconds. |
+| Black screen | The aircraft is loaded but has no power. | Turn on aircraft power. |
 
-## Resolució de problemes
+## Troubleshooting
 
-| Problema | Solució |
+| Problem | Solution |
 |---|---|
-| `MCDU not found` al terminal | Tanca SimAppPro i revisa el cable USB. |
-| `Unable to find add-on metadata file` a FlightGear | La ruta de `--addon` no és la carpeta `fgfs_addon`. Mira la secció de configuració. |
-| Falta text o símbols, o surten desplaçats | Executa `py mcdu_bridge.py --dump` i obre `http://localhost:8080/json/mcdu-bridge/missing-elements` al navegador. Guarda el número i la sortida del terminal per revisar-ho. |
-| Una tecla fa una acció equivocada | Executa `py test_hardware.py` i apunta el número i el nom que surten en prémer-la. |
+| `MCDU not found` in the terminal | Close SimAppPro and check the USB cable. |
+| `Unable to find add-on metadata file` in FlightGear | The `--addon` path is not the `fgfs_addon` folder. See the setup section. |
+| Text or symbols are missing or shifted | Run `py mcdu_bridge.py --dump` and open `http://localhost:8080/json/mcdu-bridge/missing-elements` in a browser. Save the number and the terminal output for review. |
+| A key does the wrong action | Run `py test_hardware.py` and note the number and name printed when you press it. |
 
-## Limitacions
+## Limitations
 
-- Només funciona amb l'avió **A320-family**.
-- La pantalla física és una graella de caràcters, així que els símbols gràfics de l'avió es converteixen en caràcters (`☐`, `←`, `↑`, `*`). Algun text pot quedar lleugerament desplaçat.
-- No es pot fer servir alhora que SimAppPro.
+- It only works with the **A320-family** aircraft.
+- The physical screen is a character grid, so the graphic symbols of the aircraft become characters (`☐`, `←`, `↑`, `*`). Some text may be slightly shifted.
+- It cannot be used at the same time as SimAppPro.
 
-## Llicència
+## License
 
-GPL-3.0. El protocol USB i els paquets d'inicialització de la pantalla provenen del projecte [XSchenFly](https://github.com/schenlap/XSchenFly), de memo5.
+GPL-3.0. The USB protocol and the screen init packets come from the [XSchenFly](https://github.com/schenlap/XSchenFly) project by memo5.

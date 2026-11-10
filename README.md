@@ -183,4 +183,4 @@ The A320-family is not included in this project. You must install it separately 
 
 ## Disclaimer
 
-This is an independent community project. It is not affiliated with or endorsed by WinWing, the FlightGear project, the A320-family developers or Airbus. All trademarks belong to their owners.
+This is an independent project, created with AI support. It is not affiliated with or endorsed by WinWing, the FlightGear project, the A320-family developers or Airbus. All trademarks belong to their owners.

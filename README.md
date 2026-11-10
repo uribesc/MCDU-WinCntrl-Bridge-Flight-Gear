@@ -85,7 +85,7 @@ In the FlightGear launcher, under **Settings > Additional Settings**, add:
 
 ```
 --httpd=8080
---addon=C:\mcdu_bridge\fgfs_addon
+--addon=C:[..your_route]..\mcdu_bridge\fgfs_addon
 ```
 
 The `--addon` path must be the folder that contains `addon-metadata.xml` and `addon-main.nas`. To find it:

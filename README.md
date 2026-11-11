@@ -45,7 +45,7 @@ If FlightGear or the add-on does not answer, the screen shows a message that exp
 ## Files
 
 | File | What it does |
-|---|---|
+|----|----|
 | `mcdu_bridge.py` | Main program: connects the MCDU to FlightGear. |
 | `test_hardware.py` | Tests the MCDU without FlightGear: screen, LEDs and keys. |
 | `mcdu_hardware.py` | USB driver for the MCDU: screen, LEDs, brightness and key reading. |
